@@ -12,6 +12,7 @@ def main():
 
 	while True:
 		clientsocket, address = serversocket.accept()
+		print(str.format("Client connected from {}", address))
 		t = threading.Thread(target=manage_connection, args=(clientsocket, gpio))
 		t.daemon = True
 		t.start()
