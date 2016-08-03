@@ -2,9 +2,19 @@ import PIL.ImageGrab as ig
 import mmcq
 import time
 import timeit
+import socket
 from colorthief import ColorThief
 
 def main():
+	# static DHCP allocation of RPi
+	address = "192.168.1.120"
+
+	sock = socket.socket()
+	host = socket.gethostname()
+	port = 419
+
+	sock.connect((host, port))
+
 	"""
 	width = 2000
 	images = []
@@ -21,9 +31,10 @@ def main():
 	#print(timeit.timeit('get_dominant_color(1)', "from __main__ import get_dominant_color", number=10) / 10)
 
 	while True:
-		time.sleep(1)
+		#time.sleep(1)
 		color = get_dominant_color()
-		
+		c.send(color)
+
 
 def get_dominant_color(algorithm=0):
 	
