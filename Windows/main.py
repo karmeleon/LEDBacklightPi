@@ -11,7 +11,7 @@ def main():
 
 	sock = socket.socket()
 	host = socket.gethostname()
-	port = 419
+	port = 1420
 
 	sock.connect((host, port))
 

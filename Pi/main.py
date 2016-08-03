@@ -3,7 +3,7 @@ import pigpio
 
 def main():
 	serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	serversocket.bind((socket.gethostname(), 419))
+	serversocket.bind((socket.gethostname(), 1420))
 	serversocket.listen(5)
 	while True:
 		clientsocket, address = serversocket.accept()
