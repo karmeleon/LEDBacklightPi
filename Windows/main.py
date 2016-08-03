@@ -7,7 +7,9 @@ from colorthief import ColorThief
 
 def main():
 	# static DHCP allocation of RPi
-	address = "192.168.1.120"
+	address = input("IP address of Raspberry Pi?")
+	if address == "":
+		address = "192.168.1.120"
 
 	sock = socket.socket()
 	port = 1420
@@ -30,7 +32,7 @@ def main():
 	#print(timeit.timeit('get_dominant_color(1)', "from __main__ import get_dominant_color", number=10) / 10)
 
 	while True:
-		#time.sleep(1)
+		time.sleep(1)
 		color = get_dominant_color()
 		tosend = str.encode(".".join(map(str, color)), 'utf-8')
 		print(tosend)
