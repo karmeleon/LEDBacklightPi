@@ -10,10 +10,9 @@ def main():
 	address = "192.168.1.120"
 
 	sock = socket.socket()
-	host = socket.gethostname()
 	port = 1420
 
-	sock.connect((host, port))
+	sock.connect((address, port))
 
 	"""
 	width = 2000
@@ -33,7 +32,9 @@ def main():
 	while True:
 		#time.sleep(1)
 		color = get_dominant_color()
-		c.send(color)
+		tosend = str.encode(".".join(map(str, color)), 'utf-8')
+		print(tosend)
+		sock.send(tosend)
 
 
 def get_dominant_color(algorithm=0):
