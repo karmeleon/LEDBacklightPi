@@ -9,6 +9,7 @@ Wire up the Pi to the LED strip as shown [here](http://popoklopsi.github.io/Rasp
 Caveats
 -------
 
-* Does not work with exclusive fullscreen Windows apps (i.e. games) because of how DirectX works. You'll have to run games in windowed or borderless windowed mode for the screen to be analyzed properly.
+* Does not work with exclusive fullscreen apps (i.e. games) because of how DirectX works. You'll have to run games in windowed or borderless windowed mode for the screen to be analyzed properly.
+* Copy-protected media (e.g. Netflix) appears as a black box and will be analyzed by the color selection algorithm as such. Which makes sense, if you think about it. Non-protected media like YouTube and MPC-HC work perfectly fine.
 * On multi-monitor setups, only looks at the primary monitor. This is a limitation of the PIL library.
-* Finding the most dominant color of an image is surprisngly compute-intensive. The framerate is not great here. It should be fine for standard desktop work, but the experience will be suboptimal for games and videos. I'll look into rewriting the ColorTheif library in C or something to speed it up.
+* Taking a screenshot then analyzing it consumes a surprising amount of CPU resources. As a result, it consumes 100% of one CPU core on your PC and, on my i7-4790K @ 4.6 GHz, only analyzes about 5 frames per second. It looks pretty smooth in reality, but it does consume quite a lot of energy in the process. I may decide to decrease the polling rate based on CPU load or the colors not changing for a long period of time.

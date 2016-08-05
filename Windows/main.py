@@ -32,8 +32,8 @@ def main():
 	#print(timeit.timeit('get_dominant_color(1)', "from __main__ import get_dominant_color", number=10) / 10)
 
 	while True:
-		time.sleep(1)
-		color = get_dominant_color()
+		#time.sleep(1)
+		color = get_dominant_color(1)
 		tosend = str.encode(".".join(map(str, color)), 'utf-8')
 		print(tosend)
 		sock.send(tosend)
