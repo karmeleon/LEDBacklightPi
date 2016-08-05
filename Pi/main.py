@@ -1,23 +1,26 @@
-import socket
+import socket, select, threading, queue
 import pigpio
-import select
-import threading
+import led_thread
 
 def main():
 	serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	serversocket.bind(("192.168.1.120", 1420))
 	serversocket.listen(5)
 
-	gpio = pigpio.pi()
+	color_q = queue.Queue()
+
+	color_thread = led_thread.LEDThread(color_q)
+	color_thread.setDaemon(True)
+	color_thread.start()
 
 	while True:
 		clientsocket, address = serversocket.accept()
 		print(str.format("Client connected from {}", address))
-		t = threading.Thread(target=manage_connection, args=(clientsocket, gpio))
+		t = threading.Thread(target=manage_connection, args=(clientsocket, color_q))
 		t.daemon = True
 		t.start()
 
-def manage_connection(socket, gpio):
+def manage_connection(socket, color_q):
 	socket.setblocking(0)
 	while True:
 		# wait up to 30 seconds for data to become available on the socket
@@ -30,15 +33,9 @@ def manage_connection(socket, gpio):
 			else:
 				data = data.decode("utf-8")
 				color = [int(s) for s in data.split(sep=".")]
-				#print(str.format("R:{}, G:{}, B:{}", color[0], color[1], color[2]))
-				set_color(color, gpio)
 
-def set_color(color, gpio):
-	# R:17, G:22, B:24
-	gpio.set_PWM_dutycycle(17, color[0])
-	gpio.set_PWM_dutycycle(22, color[1])
-	gpio.set_PWM_dutycycle(24, color[2])
-
+				# send the new color to the color thread
+				color_q.put(color)
 
 if __name__ == '__main__':
 	main()
