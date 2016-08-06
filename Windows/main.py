@@ -1,8 +1,10 @@
 import time, socket, math, multiprocessing, struct
 import PIL.ImageGrab as ig
+"""
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
 from colormath.color_conversions import convert_color
+"""
 import numpy as np
 
 def main():
@@ -19,11 +21,13 @@ def main():
 
 	sock.connect((address, port))
 
+	"""
 	last_color = LabColor(0.0, 0.0, 0.0)
 	delta_e_threshold = 5.0
 	max_wait_time = 2.0	# seconds
 	min_wait_time = 0.033	# seconds
 	last_change_time = time.time()
+	"""
 
 	refresh_rate = 0.1
 
@@ -36,11 +40,13 @@ def main():
 		except Exception:
 			# thrown for unknown reasons
 			continue
+		
 		last_image_time = time.time()
 		w, h = image.size
 		image.thumbnail((int(w / 20), int(h / 20)))
 		color = img_avg(np.array(image))
 
+		"""
 		if allow_throttling:
 			# find dE from previous color
 			srgb_color = sRGBColor(*color, is_upscaled=True)
@@ -61,11 +67,13 @@ def main():
 				sleep_time = max(min(math.log(curr_wait / 2), max_wait_time), min_wait_time)
 				print("waiting for {} seconds".format(sleep_time))
 				time.sleep(sleep_time)
+
 		else:
-			send_color(color, sock)
-			wait_time = max(0.0, refresh_rate - (time.time() - last_image_time))
-			print(wait_time)
-			time.sleep(wait_time)
+		"""
+		send_color(color, sock)
+		wait_time = max(0.0, refresh_rate - (time.time() - last_image_time))
+		print(wait_time)
+		time.sleep(wait_time)
 
 def send_color(color, sock):
 	tosend = struct.pack('BBB', *color)
@@ -94,17 +102,6 @@ def img_avg(img):
 			rgb[index] = low_threshold
 	
 	return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-
-def row_avg(row):
-	low_threshold = 10
-	total_pixels = 0
-	avg_pixel = np.array([0, 0, 0])
-	for pixel in row:
-		if pixel[0] > low_threshold and pixel[1] > low_threshold and pixel[2] > low_threshold:
-			avg_pixel += pixel
-			total_pixels += 1
-
-	return avg_pixel / max(total_pixels, 1)
 
 if __name__ == '__main__':
 	main()
