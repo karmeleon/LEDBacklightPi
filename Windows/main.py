@@ -1,6 +1,8 @@
-import time, socket, math, io, struct
 import PIL.ImageGrab as ig
 import mmcq
+import time
+import timeit
+import socket
 from colorthief import ColorThief
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
@@ -8,9 +10,6 @@ from colormath.color_conversions import convert_color
 import numpy as np
 
 def main():
-	#print(timeit.timeit('get_dominant_color(2)', 'from __main__ import get_dominant_color', number=50) / 50)
-	#return
-
 	# static DHCP allocation of RPi
 	address = input("IP address of Raspberry Pi?")
 	if address == "":
@@ -21,13 +20,20 @@ def main():
 
 	sock.connect((address, port))
 
-	last_color = LabColor(0.0, 0.0, 0.0)
-	delta_e_threshold = 5.0
-	max_wait_time = 2.0	# seconds
-	min_wait_time = 0.033	# seconds
-	last_change_time = time.time()
+	"""
+	width = 2000
+	images = []
+	for i in range(1, math.ceil(1920/width)):
+		for j in range(1, math.ceil(1080/width)):
+			x1 = i * width
+			x2 = min(1920 - 1, i * (width + 1))
+			y1 = j * width
+			y2 = min(1080 - 1, j * (width + 1))
+			print(x1, y1, x2, y2)
+			images.append(ig.grab(bbox=(x1, y1, x2, y2)))
+	"""
 
-	allow_throttling = True
+	#print(timeit.timeit('get_dominant_color(1)', "from __main__ import get_dominant_color", number=10) / 10)
 
 	while True:
 		image = ig.grab()
