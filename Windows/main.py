@@ -1,15 +1,15 @@
+import time, socket, math
 import PIL.ImageGrab as ig
 import mmcq
-import time
-import timeit
-import socket
 from colorthief import ColorThief
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
 from colormath.color_conversions import convert_color
-import numpy as np
 
 def main():
+	#print(timeit.timeit('get_dominant_color(2)', 'from __main__ import get_dominant_color', number=50) / 50)
+	#return
+
 	# static DHCP allocation of RPi
 	address = input("IP address of Raspberry Pi?")
 	if address == "":
@@ -20,41 +20,16 @@ def main():
 
 	sock.connect((address, port))
 
-	"""
-	width = 2000
-	images = []
-	for i in range(1, math.ceil(1920/width)):
-		for j in range(1, math.ceil(1080/width)):
-			x1 = i * width
-			x2 = min(1920 - 1, i * (width + 1))
-			y1 = j * width
-			y2 = min(1080 - 1, j * (width + 1))
-			print(x1, y1, x2, y2)
-			images.append(ig.grab(bbox=(x1, y1, x2, y2)))
-	"""
+	last_color = LabColor(0.0, 0.0, 0.0)
+	delta_e_threshold = 5.0
+	max_wait_time = 2.0	# seconds
+	min_wait_time = 0.033	# seconds
+	last_change_time = time.time()
 
-	#print(timeit.timeit('get_dominant_color(1)', "from __main__ import get_dominant_color", number=10) / 10)
+	allow_throttling = True
 
 	while True:
-		image = ig.grab()
-		w, h = image.size
-		image.thumbnail((int(w / 20), int(h / 20)))
-
-		image = np.array(image)
-		output = io.BytesIO()
-		np.savez(output, x=image)
-		output = output.getvalue()
-
-		# send size of the data first
-		size_struct = struct.pack('!i', len(output))
-		sock.send(size_struct)
-		print('sending frame of length {}'.format(len(output)))
-		# then send the data itself
-		sock.send(output)
-		sock.recv(128)
-
-		continue
-
+		#time.sleep(1)
 		color = get_dominant_color(2)
 		if allow_throttling:
 			# find dE from previous color
@@ -79,6 +54,8 @@ def main():
 		else:
 			send_color(color, sock)
 
+		
+
 def send_color(color, sock):
 	tosend = str.encode(".".join(map(str, color)), 'utf-8')
 	sock.send(tosend)
@@ -100,49 +77,49 @@ def get_dominant_color(algorithm=0):
 
 def img_avg(img):
 	# Modified version of the algorithm from https://github.com/kershner/screenBloom
-	low_threshold = 10
-	mid_threshold = 40
-	dark_pixels = 1
-	mid_range_pixels = 1
-	total_pixels = 1
-	r = 1
-	g = 1
-	b = 1
+    low_threshold = 10
+    mid_threshold = 40
+    dark_pixels = 1
+    mid_range_pixels = 1
+    total_pixels = 1
+    r = 1
+    g = 1
+    b = 1
 
-	# Win version of imgGrab does not contain alpha channel
-	if img.mode == 'RGB':
-		img.putalpha(0)
+    # Win version of imgGrab does not contain alpha channel
+    if img.mode == 'RGB':
+        img.putalpha(0)
 
-	# Create list of pixels
-	pixels = list(img.getdata())
+    # Create list of pixels
+    pixels = list(img.getdata())
 
-	for red, green, blue, alpha in pixels:
-		# Don't count pixels that are too dark
-		if red < low_threshold and green < low_threshold and blue < low_threshold:
-			dark_pixels += 1
-		else:
-			if red < mid_threshold and green < mid_threshold and blue < mid_threshold:
-				mid_range_pixels += 1
-			r += red
-			g += green
-			b += blue
-		total_pixels += 1
+    for red, green, blue, alpha in pixels:
+        # Don't count pixels that are too dark
+        if red < low_threshold and green < low_threshold and blue < low_threshold:
+            dark_pixels += 1
+        else:
+            if red < mid_threshold and green < mid_threshold and blue < mid_threshold:
+                mid_range_pixels += 1
+            r += red
+            g += green
+            b += blue
+        total_pixels += 1
 
-	n = len(pixels)
-	r_avg = r / n
-	g_avg = g / n
-	b_avg = b / n
-	rgb = [r_avg, g_avg, b_avg]
+    n = len(pixels)
+    r_avg = r / n
+    g_avg = g / n
+    b_avg = b / n
+    rgb = [r_avg, g_avg, b_avg]
 
-	# If computed average below darkness threshold, set to the threshold
-	for index, item in enumerate(rgb):
-		if item <= low_threshold:
-			rgb[index] = low_threshold
+    # If computed average below darkness threshold, set to the threshold
+    for index, item in enumerate(rgb):
+        if item <= low_threshold:
+            rgb[index] = low_threshold
 
-	rgb = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+    rgb = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
-	print(float(dark_pixels) / float(total_pixels) * 100)
-	return rgb
+    print(float(dark_pixels) / float(total_pixels) * 100)
+    return rgb
 
 if __name__ == '__main__':
 	main()
