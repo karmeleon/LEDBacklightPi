@@ -1,4 +1,4 @@
-import socket, select, threading, queue
+import socket, select, threading, queue, struct
 import pigpio
 import led_thread
 
@@ -21,21 +21,17 @@ def main():
 		t.start()
 
 def manage_connection(socket, color_q):
-	socket.setblocking(0)
 	while True:
-		# wait up to 30 seconds for data to become available on the socket
-		ready = select.select([socket], [], [], 30)
-		if ready[0]:
-			data = socket.recv(512)
-			if len(data) == 0:
+		buf = bytearray()
+		while len(buf) < 3:
+			buf += socket.recv(3 - len(buf))
+			if len(buf) == 0:
 				print("Socket closed, ending thread")
 				return
-			else:
-				data = data.decode("utf-8")
-				color = [int(s) for s in data.split(sep=".")]
+		color = struct.unpack('BBB', buf)
 
-				# send the new color to the color thread
-				color_q.put(color)
+		# send the new color to the color thread
+		color_q.put(color)
 
 if __name__ == '__main__':
 	main()
