@@ -82,6 +82,7 @@ def send_color(color, sock):
 def img_avg(img):
 	# Modified version of the algorithm from https://github.com/kershner/screenBloom
 	low_threshold = 10
+	high_threshold = 245
 
 	img = img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
 
@@ -89,9 +90,15 @@ def img_avg(img):
 	total_pixels = 0
 
 	for pixel in img:
-		if pixel[0] > low_threshold and pixel[1] > low_threshold and pixel[2] > low_threshold:
-			rgb += pixel
-			total_pixels += 1
+		# don't count pixels that are too dark or too light
+		# surprisingly, the numpy approach is slower than the raw Python approach by ~10ms
+		# too bad it's uglier. oh well.
+		#if np.any(np.greater(pixel, low_threshold)) and np.any(np.less(pixel, high_threshold)):
+		
+		if pixel[0] > low_threshold or pixel[1] > low_threshold or pixel[2] > low_threshold:
+			if pixel[0] < high_threshold or pixel[1] < high_threshold or pixel[2] < high_threshold:
+				rgb += pixel
+				total_pixels += 1
 
 	rgb /= total_pixels
 
