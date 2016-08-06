@@ -1,4 +1,4 @@
-import time, socket, math, multiprocessing
+import time, socket, math, multiprocessing, struct
 import PIL.ImageGrab as ig
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
@@ -25,11 +25,14 @@ def main():
 	min_wait_time = 0.033	# seconds
 	last_change_time = time.time()
 
+	refresh_rate = 0.1
+
 	allow_throttling = False
 
 	while True:
 		#time.sleep(1)
 		image = ig.grab()
+		last_image_time = time.time()
 		w, h = image.size
 		image.thumbnail((int(w / 20), int(h / 20)))
 		color = img_avg(np.array(image))
@@ -56,11 +59,13 @@ def main():
 				time.sleep(sleep_time)
 		else:
 			send_color(color, sock)
+			wait_time = max(0.0, refresh_rate - (time.time() - last_image_time))
+			print(wait_time)
+			time.sleep(wait_time)
 
 def send_color(color, sock):
-	tosend = str.encode(".".join(map(str, color)), 'utf-8')
+	tosend = struct.pack('BBB', *color)
 	sock.send(tosend)
-	print(color)
 
 def img_avg(img):
 	# Modified version of the algorithm from https://github.com/kershner/screenBloom
