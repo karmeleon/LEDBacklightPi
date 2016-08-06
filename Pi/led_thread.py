@@ -1,4 +1,4 @@
-import threading, queue, time
+import threading, queue, time, colorsys
 import pigpio
 
 class LEDThread(threading.Thread):
@@ -12,6 +12,7 @@ class LEDThread(threading.Thread):
 		# last_time is the time at which last_color was received
 		self.last_time = time.time()
 		self.duration = 0.1
+		self.max_duration = 1.0
 
 		self.gpio = pigpio.pi()
 
@@ -23,12 +24,21 @@ class LEDThread(threading.Thread):
 			# see if there's a new color
 			try:
 				color = self.color_q.get(False)
+
 				# there's a new color, so set the current color as the last color
 				# and this new color as the next color
+				# convert RGB to HSV, saturate it a little more, then back to RGB
+				color = self.int_tuple_to_float(color)
+				hsv = colorsys.rgb_to_hsv(*color)
+				saturated_color = (hsv[0], min(hsv[1] * 1.5, 1.0), hsv[2])
+				saturated_color = colorsys.hsv_to_rgb(*saturated_color)
+				#saturated_color = colorsys.hsv_to_rgb(*hsv)
+				color = self.float_tuple_to_int(saturated_color)
+
 				self.last_color = self.current_color
 				self.next_color = color
 				# and update the timers
-				self.duration = curr_time - self.last_time
+				self.duration = min(curr_time - self.last_time, self.max_duration)
 				self.last_time = curr_time
 			except queue.Empty:
 				# no new color in the queue, ignore it
@@ -43,6 +53,12 @@ class LEDThread(threading.Thread):
 			# #notcinematic
 			time.sleep(.016)
 
+	def float_tuple_to_int(self, tuple):
+		return (int(tuple[0] * 255), int(tuple[1] * 255), int(tuple[2] * 255))
+
+	def int_tuple_to_float(self, tuple):
+		return (tuple[0] / 255.0, tuple[1] / 255.0, tuple[2] / 255.0)
+
 	def interpolate_color(self, fade_pct):
 		# numpy would be nice here, but I don't want to require a huge library
 		# for just one usage.
@@ -54,6 +70,10 @@ class LEDThread(threading.Thread):
 
 	def set_color(self, color):
 		# R:17, G:22, B:24
-		self.gpio.set_PWM_dutycycle(17, color[0])
-		self.gpio.set_PWM_dutycycle(22, color[1])
-		self.gpio.set_PWM_dutycycle(24, color[2])
+		self.gpio.set_PWM_dutycycle(17, self.clamp_to_byte(color[0]))
+		self.gpio.set_PWM_dutycycle(22, self.clamp_to_byte(color[1]))
+		self.gpio.set_PWM_dutycycle(24, self.clamp_to_byte(color[2]))
+
+	def clamp_to_byte(self, i):
+		# http://stackoverflow.com/a/4092677
+		return sorted((0, 255, i))[1]
