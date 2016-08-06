@@ -31,7 +31,11 @@ def main():
 
 	while True:
 		#time.sleep(1)
-		image = ig.grab()
+		try:
+			image = ig.grab()
+		except Exception:
+			# thrown for unknown reasons
+			continue
 		last_image_time = time.time()
 		w, h = image.size
 		image.thumbnail((int(w / 20), int(h / 20)))
