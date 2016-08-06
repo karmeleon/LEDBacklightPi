@@ -1,10 +1,9 @@
-import time, socket, math
+import time, socket, math, multiprocessing
 import PIL.ImageGrab as ig
-import mmcq
-from colorthief import ColorThief
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
 from colormath.color_conversions import convert_color
+import numpy as np
 
 def main():
 	#print(timeit.timeit('get_dominant_color(2)', 'from __main__ import get_dominant_color', number=50) / 50)
@@ -26,11 +25,15 @@ def main():
 	min_wait_time = 0.033	# seconds
 	last_change_time = time.time()
 
-	allow_throttling = True
+	allow_throttling = False
 
 	while True:
 		#time.sleep(1)
-		color = get_dominant_color(2)
+		image = ig.grab()
+		w, h = image.size
+		image.thumbnail((int(w / 20), int(h / 20)))
+		color = img_avg(np.array(image))
+
 		if allow_throttling:
 			# find dE from previous color
 			srgb_color = sRGBColor(*color, is_upscaled=True)
@@ -54,72 +57,45 @@ def main():
 		else:
 			send_color(color, sock)
 
-		
-
 def send_color(color, sock):
 	tosend = str.encode(".".join(map(str, color)), 'utf-8')
 	sock.send(tosend)
 	print(color)
 
-def get_dominant_color(algorithm=0):
-	
-	image = ig.grab()
-	w, h = image.size
-	image.thumbnail((int(w / 5), int(h / 5)))
-	
-	if algorithm == 0:
-		return mmcq.get_dominant_color(image)
-	elif algorithm == 1:
-		ct = ColorThief(image)
-		return ct.get_color(quality=1)
-	elif algorithm == 2:
-		return img_avg(image)
-
 def img_avg(img):
 	# Modified version of the algorithm from https://github.com/kershner/screenBloom
-    low_threshold = 10
-    mid_threshold = 40
-    dark_pixels = 1
-    mid_range_pixels = 1
-    total_pixels = 1
-    r = 1
-    g = 1
-    b = 1
+	low_threshold = 10
 
-    # Win version of imgGrab does not contain alpha channel
-    if img.mode == 'RGB':
-        img.putalpha(0)
+	img = img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
 
-    # Create list of pixels
-    pixels = list(img.getdata())
+	rgb = np.array([0, 0, 0])
+	total_pixels = 0
 
-    for red, green, blue, alpha in pixels:
-        # Don't count pixels that are too dark
-        if red < low_threshold and green < low_threshold and blue < low_threshold:
-            dark_pixels += 1
-        else:
-            if red < mid_threshold and green < mid_threshold and blue < mid_threshold:
-                mid_range_pixels += 1
-            r += red
-            g += green
-            b += blue
-        total_pixels += 1
+	for pixel in img:
+		if pixel[0] > low_threshold and pixel[1] > low_threshold and pixel[2] > low_threshold:
+			rgb += pixel
+			total_pixels += 1
 
-    n = len(pixels)
-    r_avg = r / n
-    g_avg = g / n
-    b_avg = b / n
-    rgb = [r_avg, g_avg, b_avg]
+	rgb /= total_pixels
 
-    # If computed average below darkness threshold, set to the threshold
-    for index, item in enumerate(rgb):
-        if item <= low_threshold:
-            rgb[index] = low_threshold
+	# If computed average below darkness threshold, set to the threshold
 
-    rgb = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+	for index, item in enumerate(rgb):
+		if item <= low_threshold:
+			rgb[index] = low_threshold
+	
+	return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
-    print(float(dark_pixels) / float(total_pixels) * 100)
-    return rgb
+def row_avg(row):
+	low_threshold = 10
+	total_pixels = 0
+	avg_pixel = np.array([0, 0, 0])
+	for pixel in row:
+		if pixel[0] > low_threshold and pixel[1] > low_threshold and pixel[2] > low_threshold:
+			avg_pixel += pixel
+			total_pixels += 1
+
+	return avg_pixel / max(total_pixels, 1)
 
 if __name__ == '__main__':
 	main()
