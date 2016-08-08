@@ -1,5 +1,6 @@
 import time, socket, math, multiprocessing, struct
 import PIL.ImageGrab as ig
+import colorthief
 """
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
@@ -44,7 +45,7 @@ def main():
 		last_image_time = time.time()
 		w, h = image.size
 		image.thumbnail((int(w / 20), int(h / 20)))
-		color = img_avg(np.array(image))
+		color = get_dominant_color(image, 1)
 
 		"""
 		if allow_throttling:
@@ -72,12 +73,26 @@ def main():
 		"""
 		send_color(color, sock)
 		wait_time = max(0.0, refresh_rate - (time.time() - last_image_time))
-		print(wait_time)
+		#print(wait_time)
 		time.sleep(wait_time)
 
 def send_color(color, sock):
+	color = clamp_color_to_byte(color)
 	tosend = struct.pack('BBB', *color)
 	sock.send(tosend)
+
+def clamp_color_to_byte(color):
+	return (clamp_to_byte(color[0]), clamp_to_byte(color[1]),clamp_to_byte(color[2]))
+
+def clamp_to_byte(i):
+	# http://stackoverflow.com/a/4092677
+	return sorted((0, 255, i))[1]
+
+def get_dominant_color(img, algorithm):
+	if algorithm == 0:
+		return img_avg(np.array(img))
+	elif algorithm == 1:
+		return colorthief.ColorThief(img).get_color(1)
 
 def img_avg(img):
 	# Modified version of the algorithm from https://github.com/kershner/screenBloom
@@ -94,20 +109,21 @@ def img_avg(img):
 		# surprisingly, the numpy approach is slower than the raw Python approach by ~10ms
 		# too bad it's uglier. oh well.
 		#if np.any(np.greater(pixel, low_threshold)) and np.any(np.less(pixel, high_threshold)):
-		
+
 		if pixel[0] > low_threshold or pixel[1] > low_threshold or pixel[2] > low_threshold:
 			if pixel[0] < high_threshold or pixel[1] < high_threshold or pixel[2] < high_threshold:
 				rgb += pixel
 				total_pixels += 1
 
-	rgb /= total_pixels
+	if total_pixels > 1:
+		rgb /= total_pixels
 
 	# If computed average below darkness threshold, set to the threshold
-
+	"""
 	for index, item in enumerate(rgb):
 		if item <= low_threshold:
 			rgb[index] = low_threshold
-	
+	"""
 	return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
 if __name__ == '__main__':
