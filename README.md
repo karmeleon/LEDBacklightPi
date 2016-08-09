@@ -5,7 +5,7 @@ Requirements
 ------------
 
 * Python 3.X
-* Pillow installed on the host PC
+* Pillow, colormath, and numpy installed on the host PC
 
 
 Instructions
