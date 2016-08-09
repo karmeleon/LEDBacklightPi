@@ -1,5 +1,5 @@
 # LEDBacklightPi
-Syncs RGB LEDs to the current contents of the desktop using a Raspberry Pi. Uses a modified version of img_avg from [ScreeonBloom](https://github.com/kershner/screenBloom)
+Syncs RGB LEDs to the current contents of the desktop using a Raspberry Pi. Uses a modified version of img_avg from [ScreeonBloom](https://github.com/kershner/screenBloom) and [fengsp's color-thief-py](https://github.com/fengsp/color-thief-py).
 
 Requirements
 ------------
