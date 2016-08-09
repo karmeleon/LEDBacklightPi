@@ -14,6 +14,8 @@ class LEDThread(threading.Thread):
 		self.duration = 0.1
 		self.max_duration = 1.0
 
+		self.saturation_factor = 1.0
+
 		self.gpio = pigpio.pi()
 
 	def run(self):
@@ -30,19 +32,17 @@ class LEDThread(threading.Thread):
 				# convert RGB to HSV, saturate it a little more, then back to RGB
 				color = self.int_tuple_to_float(color)
 				hsv = colorsys.rgb_to_hsv(*color)
-				saturated_color = (hsv[0], min(hsv[1] * 1.5, 1.0), hsv[2])
+				saturated_color = (hsv[0], min(hsv[1] * self.saturation_factor, 1.0), hsv[2])
 				saturated_color = colorsys.hsv_to_rgb(*saturated_color)
 				#saturated_color = colorsys.hsv_to_rgb(*hsv)
 				color = self.float_tuple_to_int(saturated_color)
 
-				self.last_color = self.current_color
-				self.next_color = color
-				# and update the timers
-				self.duration = min(curr_time - self.last_time, self.max_duration)
-				self.last_time = curr_time
+				self.change_color(color, min(curr_time - self.last_time, self.max_duration))
 			except queue.Empty:
-				# no new color in the queue, ignore it
-				pass
+				# no new color in the queue
+				# if it's been 5 seconds since the last color, fade to black
+				if curr_time - self.last_time > 5.0:
+					self.change_color((0, 0, 0), 1.0)
 
 			# now start/continue the fade
 			fade_pct = min((curr_time - self.last_time) / self.duration, 1.0)
@@ -52,6 +52,12 @@ class LEDThread(threading.Thread):
 
 			# #notcinematic
 			time.sleep(.016)
+
+	def change_color(self, color, duration):
+		self.last_color = self.current_color
+		self.next_color = color
+		self.duration = duration
+		self.last_time = time.time()
 
 	def float_tuple_to_int(self, tuple):
 		return (int(tuple[0] * 255), int(tuple[1] * 255), int(tuple[2] * 255))
