@@ -70,6 +70,10 @@ class ColorThief(object):
                 if not (r > 250 and g > 250 and b > 250):
                     valid_pixels.append((r, g, b))
 
+        # return white if no valid pixels to avoid a crash on pure white images
+        if not valid_pixels:
+            return [(255, 255, 255)]
+
         # Send array to quantize function which clusters values
         # using median cut algorithm
         cmap = MMCQ.quantize(valid_pixels, color_count)
