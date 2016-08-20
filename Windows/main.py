@@ -24,11 +24,10 @@ def main():
 	
 	last_color = LabColor(0.0, 0.0, 0.0)
 	delta_e_threshold = 5.0
-	max_wait_time = 2.0	# seconds
-	min_wait_time = 0.033	# seconds
+	max_wait_time = 1.0	# seconds
+	min_wait_time = 0.05	# seconds
 	last_change_time = time.time()
 	
-
 	refresh_rate = 0.1
 
 	allow_throttling = True
