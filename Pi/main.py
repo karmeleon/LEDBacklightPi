@@ -2,6 +2,8 @@ import socket, select, threading, queue, struct
 import pigpio
 import led_thread
 
+import daemon
+
 def main():
 	serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	serversocket.bind(("192.168.1.120", 1420))
@@ -33,5 +35,10 @@ def manage_connection(socket, color_q):
 		# send the new color to the color thread
 		color_q.put(color)
 
+with daemon.DaemonContext():
+	main()
+
+"""
 if __name__ == '__main__':
 	main()
+"""
