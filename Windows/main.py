@@ -66,7 +66,6 @@ def main():
 				curr_wait = time.time() - last_change_time
 				sleep_time = max(min(math.log(curr_wait / 2), max_wait_time), min_wait_time)
 
-				print("waiting for {} seconds".format(sleep_time))
 				time.sleep(sleep_time)
 
 		else:
