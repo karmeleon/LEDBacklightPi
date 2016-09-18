@@ -6,7 +6,7 @@ import daemon
 
 def main():
 	serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	serversocket.bind(("192.168.1.120", 1420))
+	serversocket.bind(("", 1420))
 	serversocket.listen(5)
 
 	color_q = queue.Queue()
