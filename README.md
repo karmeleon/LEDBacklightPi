@@ -6,12 +6,13 @@ Requirements
 
 * Python 3.X
 * Pillow, colormath, and numpy installed on the host PC
+* python-daemon installed on the RPi
 
 
 Instructions
 ------------
 
-Wire up the Pi to the LED strip as shown [here](http://popoklopsi.github.io/RaspberryPi-LedStrip/#!/), then run Pi/main.py on your Raspberry Pi and Windows/main.py on your Windows machine.
+Wire up the Pi to the LED strip as shown [here](http://popoklopsi.github.io/RaspberryPi-LedStrip/#!/), then run python3 main.py start on your Raspberry Pi from the /Pi directory and Windows/main.py on your Windows machine.
 
 Caveats
 -------

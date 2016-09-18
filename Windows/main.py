@@ -24,11 +24,10 @@ def main():
 	
 	last_color = LabColor(0.0, 0.0, 0.0)
 	delta_e_threshold = 5.0
-	max_wait_time = 2.0	# seconds
-	min_wait_time = 0.033	# seconds
+	max_wait_time = 1.0	# seconds
+	min_wait_time = 0.05	# seconds
 	last_change_time = time.time()
 	
-
 	refresh_rate = 0.1
 
 	allow_throttling = True
@@ -67,7 +66,6 @@ def main():
 				curr_wait = time.time() - last_change_time
 				sleep_time = max(min(math.log(curr_wait / 2), max_wait_time), min_wait_time)
 
-				print("waiting for {} seconds".format(sleep_time))
 				time.sleep(sleep_time)
 
 		else:
