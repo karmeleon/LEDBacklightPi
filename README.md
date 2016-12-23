@@ -5,7 +5,7 @@ Requirements
 ------------
 
 * Python 3.X
-* Pillow, colormath, and numpy installed on the host PC
+* Pillow, colormath, pyopencl, and numpy installed on the host PC
 * python-daemon installed on the RPi
 * An OpenCL-capable GPU for the GPU mode
 
