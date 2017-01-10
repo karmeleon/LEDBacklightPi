@@ -1,26 +1,31 @@
-import time, socket, math, multiprocessing, struct, collections
+import time, socket, math, struct
 import PIL.ImageGrab as ig
-import colorthief
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_diff import delta_e_cie2000
 from colormath.color_conversions import convert_color
-from cl_color_average import CLColorAverage
+from functools import partial
+
+from extractors.mean_extractor import MeanExtractor
+from extractors.cl_mean_extractor import CLMeanExtractor
+from extractors.colorthief_extractor import ColorThiefExtractor
+from extractors.hsv_extractor import HSVExtractor
 
 import numpy as np
 
 
-class LEDBacklightPiServer(object):
+class LEDBacklightPiClient(object):
 	ALGORITHMS = {
-		'FAST': 0,		# ~64ms
-		'FAST_CL': 2,	# ~30ms
-		'FANCY': 1,		# ~230ms
+		'MEAN': MeanExtractor,			# ~64ms
+		'MEAN_CL': CLMeanExtractor,		# ~30ms
+		'FANCY': ColorThiefExtractor,	# ~230ms
+		'HSV': HSVExtractor,			# ~350ms
 	}
 
-	CHOSEN_ALGORITHM = ALGORITHMS['FAST_CL']
+	CHOSEN_ALGORITHM = ALGORITHMS['HSV']
+	SHOW_TIMING = False
 
 	def __init__(self):
-		if self.CHOSEN_ALGORITHM == self.ALGORITHMS['FAST_CL']:
-			self.cl_color_avg = CLColorAverage()
+		self.extractor = self.CHOSEN_ALGORITHM()
 
 	def main(self):
 		# static DHCP allocation of RPi
@@ -37,7 +42,7 @@ class LEDBacklightPiServer(object):
 		last_color = LabColor(0.0, 0.0, 0.0)
 		delta_e_threshold = 5.0
 		max_wait_time = 1.0		# seconds
-		min_wait_time = 0.03	# seconds
+		min_wait_time = 0.05	# seconds
 		last_change_time = time.time()
 		
 		refresh_rate = 0.1
@@ -50,12 +55,16 @@ class LEDBacklightPiServer(object):
 			except Exception:
 				# thrown for unknown reasons
 				print("Screen grab failed for some reason, it's probably fine.")
-				time.sleep(10)
+				time.sleep(5)
 				continue
 			
 			last_image_time = time.time()
 			w, h = image.size
-			color = self.get_dominant_color(image, self.CHOSEN_ALGORITHM)
+			start = time.time()
+			color = self.extractor.get_color(image)
+			end = time.time()
+			if self.SHOW_TIMING:
+				print(end - start)
 
 			if allow_throttling:
 				# find dE from previous color
@@ -83,7 +92,6 @@ class LEDBacklightPiServer(object):
 			else:
 				self.send_color(color, sock)
 				wait_time = max(0.0, refresh_rate - (time.time() - last_image_time))
-				#print(wait_time)
 				time.sleep(wait_time)
 
 	def send_color(self, color, sock):
@@ -98,51 +106,5 @@ class LEDBacklightPiServer(object):
 		# http://stackoverflow.com/a/4092677
 		return sorted((0, 255, i))[1]
 
-	def get_dominant_color(self, img, algorithm):
-		if algorithm == 0:
-			# ~64 ms
-			img.thumbnail((int(img.size[0] / 20), int(img.size[1] / 20)))
-			return self.img_avg(img)
-		elif algorithm == 1:
-			# ~230 ms
-			img.thumbnail((int(img.size[0] / 20), int(img.size[1] / 20)))
-			return colorthief.ColorThief(img).get_color(1)
-		elif algorithm == 2:
-			# ~30 ms
-			return self.cl_color_avg.get_color(img)
-
-	def img_avg(self, img):
-		# Modified version of the algorithm from https://github.com/kershner/screenBloom
-		img = np.array(img)
-		low_threshold = 10
-		high_threshold = 245
-
-		img = img.reshape((img.shape[0] * img.shape[1], img.shape[2]))
-
-		rgb = np.array([0, 0, 0])
-		total_pixels = 0
-
-		for pixel in img:
-			# don't count pixels that are too dark or too light
-			# surprisingly, the numpy approach is slower than the raw Python approach by ~10ms
-			# too bad it's uglier. oh well.
-			#if np.any(np.greater(pixel, low_threshold)) and np.any(np.less(pixel, high_threshold)):
-
-			if pixel[0] > low_threshold or pixel[1] > low_threshold or pixel[2] > low_threshold:
-				if pixel[0] < high_threshold or pixel[1] < high_threshold or pixel[2] < high_threshold:
-					rgb += pixel
-					total_pixels += 1
-
-		if total_pixels > 1:
-			rgb /= total_pixels
-
-		# If computed average below darkness threshold, set to the threshold
-		"""
-		for index, item in enumerate(rgb):
-			if item <= low_threshold:
-				rgb[index] = low_threshold
-		"""
-		return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-
 if __name__ == '__main__':
-	LEDBacklightPiServer().main()
+	LEDBacklightPiClient().main()
