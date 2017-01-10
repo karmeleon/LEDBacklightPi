@@ -4,8 +4,8 @@ Syncs RGB LEDs to the current contents of the desktop using a Raspberry Pi. Uses
 Requirements
 ------------
 
-* Python 3.x
-* Pillow, colormath, and numpy installed on the client PC
+* Python 3.X
+* Pillow, colormath, pyopencl, and numpy installed on the host PC
 * python-daemon installed on the RPi
 * An OpenCL-capable GPU and PyOpenCL for the GPU mode
 * I've only tested the client program on Windows 10, but there's no reason macOS and Linux shouldn't work.
