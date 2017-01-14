@@ -77,7 +77,7 @@ class CLMeanExtractor(BaseCLExtractor):
 		src_buf = cl.image_from_array(self.ctx, src, 4, norm_int=True)
 
 		out = np.zeros(4 * total_work_groups, dtype=np.int32)
-		out_buf = cl.Buffer(self.ctx, cl.mem_flags.WRITE_ONLY, size=out.itemsize * 4 * total_work_groups)
+		out_buf = cl.Buffer(self.ctx, mf.WRITE_ONLY, size=out.itemsize * 4 * total_work_groups)
 
 		kernel = self.prg.get_color
 		kernel.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])

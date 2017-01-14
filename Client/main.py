@@ -9,6 +9,7 @@ from extractors.mean_extractor import MeanExtractor
 from extractors.cl_mean_extractor import CLMeanExtractor
 from extractors.colorthief_extractor import ColorThiefExtractor
 from extractors.hsv_extractor import HSVExtractor
+from extractors.cl_hsv_extractor import CLHSVExtractor
 
 import numpy as np
 
@@ -19,9 +20,10 @@ class LEDBacklightPiClient(object):
 		'MEAN_CL': CLMeanExtractor,		# ~30ms
 		'FANCY': ColorThiefExtractor,	# ~230ms
 		'HSV': HSVExtractor,			# ~350ms
+		'HSV_CL': CLHSVExtractor,		# ~50ms
 	}
 
-	CHOSEN_ALGORITHM = ALGORITHMS['HSV']
+	CHOSEN_ALGORITHM = ALGORITHMS['HSV_CL']
 	SHOW_TIMING = False
 
 	def __init__(self):
