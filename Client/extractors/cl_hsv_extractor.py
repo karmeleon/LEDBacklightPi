@@ -32,12 +32,12 @@ class CLHSVExtractor(BaseCLExtractor):
 
 		float delta = max - min;
 
-		if(max != 0) {
-			hsv.y = delta / max;
-		} else {
-			// we have black
-			return (float4)(0.0f);
+		if(delta == 0.0f) {
+			// we have some shade of gray
+			return (float4)(0.0f, 0.0f, rgb.x, 0.0f);
 		}
+
+		hsv.y = delta / max;
 
 		if(rgb.x == max) {
 			hsv.x = (rgb.y - rgb.z) / delta;
