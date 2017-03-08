@@ -71,9 +71,5 @@ class LEDBacklightPiServer(object):
 			self.color_q.put(color)
 			self.cancel_fade_out_timer()
 
-"""
 with daemon.DaemonContext():
-	LEDBacklightPiServer()
-"""
-if __name__ == '__main__':
 	LEDBacklightPiServer()
