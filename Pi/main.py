@@ -5,7 +5,7 @@ from bytestream_color_source_thread import BytestreamColorSourceThread
 from web_color_source_thread import WebColorSourceThread
 from functools import partial
 
-#import daemon
+import daemon
 
 class LEDBacklightPiServer(object):
 	"""Main server class for LEDBacklightPi"""
@@ -71,9 +71,5 @@ class LEDBacklightPiServer(object):
 			self.color_q.put(color)
 			self.cancel_fade_out_timer()
 
-"""
 with daemon.DaemonContext():
-	LEDBacklightPiServer()
-"""
-if __name__ == '__main__':
 	LEDBacklightPiServer()
