@@ -1,4 +1,4 @@
-import threading, queue, time, colorsys
+import threading, queue, time, colorsys, platform
 import pigpio
 
 class LEDThread(threading.Thread):
@@ -6,9 +6,9 @@ class LEDThread(threading.Thread):
 		super(LEDThread, self).__init__()
 
 		self.color_q = color_q
-		self.last_color = (0, 0, 255)
-		self.current_color = (0, 0, 255)
-		self.next_color = (0, 0, 255)
+		self.last_color = (0, 0, 0)
+		self.current_color = (0, 0, 0)
+		self.next_color = (0, 0, 0)
 		# last_time is the time at which last_color was received
 		self.last_time = time.time()
 		self.duration = 0.1
@@ -16,7 +16,14 @@ class LEDThread(threading.Thread):
 
 		self.saturation_factor = 1.0
 
-		self.gpio = pigpio.pi()
+		# print to console when not running on an RPi
+		# assuming that if you're running on ARM, you're probably on a Pi
+		# if not, deal with it, modify the code or something
+		if 'arm' in platform.machine():
+			self.gpio = pigpio.pi()
+			self.gpio_enabled = True
+		else:
+			self.gpio_enabled = False
 
 	def run(self):
 		print("LEDThread now running")
@@ -40,9 +47,9 @@ class LEDThread(threading.Thread):
 				self.change_color(color, min(curr_time - self.last_time, self.max_duration))
 			except queue.Empty:
 				# no new color in the queue
-				# if it's been 5 seconds since the last color, fade to black
-				if curr_time - self.last_time > 5.0:
-					self.change_color((0, 0, 0), 1.0)
+				# we want to keep going so that the fade keeps animating
+				# instead of blocking on waiting for a new color
+				pass
 
 			# now start/continue the fade
 			fade_pct = min((curr_time - self.last_time) / self.duration, 1.0)
@@ -76,11 +83,14 @@ class LEDThread(threading.Thread):
 
 	def set_color(self, color):
 		# R:17, G:22, B:24
-		try:
-			self.gpio.set_PWM_dutycycle(17, self.clamp_to_byte(color[0]))
-			self.gpio.set_PWM_dutycycle(22, self.clamp_to_byte(color[1]))
-			self.gpio.set_PWM_dutycycle(24, self.clamp_to_byte(color[2]))
-		except Exeption:
+		if self.gpio_enabled:
+			try:
+				self.gpio.set_PWM_dutycycle(17, self.clamp_to_byte(color[0]))
+				self.gpio.set_PWM_dutycycle(22, self.clamp_to_byte(color[1]))
+				self.gpio.set_PWM_dutycycle(24, self.clamp_to_byte(color[2]))
+			except Exeption:
+				print(color)
+		else:
 			print(color)
 
 	def clamp_to_byte(self, i):
