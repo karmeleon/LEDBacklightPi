@@ -31,7 +31,7 @@ class LEDBacklightPiClient(object):
 
 	def main(self):
 		# static DHCP allocation of RPi
-		address = input("IP address of Raspberry Pi?")
+		address = input("IP address of Raspberry Pi? (192.168.1.120) ")
 		if address == "":
 			address = "192.168.1.120"
 

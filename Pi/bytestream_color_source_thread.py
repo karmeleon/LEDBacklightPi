@@ -1,4 +1,4 @@
-import threading, queue, socket
+import threading, queue, socket, struct
 
 class BytestreamColorSourceThread(threading.Thread):
 	"""A thread that contantly listens for incoming connections from LEDBacklightPi clients
@@ -11,6 +11,7 @@ class BytestreamColorSourceThread(threading.Thread):
 			tuple when a color comes in from any client
 		"""
 		super(BytestreamColorSourceThread, self).__init__()
+		self.color_callback = color_callback
 		self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.serversocket.bind(("", 1420))
 		self.serversocket.listen(5)
@@ -19,11 +20,11 @@ class BytestreamColorSourceThread(threading.Thread):
 		while True:
 			clientsocket, address = self.serversocket.accept()
 			print(str.format("Client connected from {}", address))
-			t = threading.Thread(target=manage_connection, args=(clientsocket, color_q))
+			t = threading.Thread(target=self.manage_connection, args=(clientsocket,))
 			t.daemon = True
 			t.start()
 
-	def manage_connection(socket, color_q, color_callback):
+	def manage_connection(self, socket):
 		while True:
 			buf = bytearray()
 			while len(buf) < 3:
@@ -34,4 +35,4 @@ class BytestreamColorSourceThread(threading.Thread):
 			color = struct.unpack('BBB', buf)
 
 			# send the new color to the color thread
-			color_callback(False, color)
+			self.color_callback(False, color)
