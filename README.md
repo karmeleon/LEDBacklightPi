@@ -14,7 +14,7 @@ Requirements
 Instructions
 ------------
 
-Wire up the Pi to the LED strip as shown [here](http://popoklopsi.github.io/RaspberryPi-LedStrip/#!/), then run python3 main.py start on your Raspberry Pi from the /Pi directory and Client/main.py on your computer. Alternatively, load up (your RPi's IP):1422 to access the web control panel.
+Wire up the Pi to the LED strip as shown [here](https://dordnung.de/raspberrypi-ledstrip/), then run python3 main.py start on your Raspberry Pi from the /Pi directory and Client/main.py on your computer. Alternatively, load up (your RPi's IP):1422 to access the web control panel.
 
 Caveats
 -------
